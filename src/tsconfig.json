@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "declaration": true,
+        "noImplicitAny": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "sourceMap": true,
+        "noLib": true,
+        "outDir": "../lib"
+    },
+    "filesGlob": [
+        "../node_modules/typescript/lib/lib.es6.d.ts",
+        "../typings/**/*.d.ts",
+        "./**/*.ts"
+    ],
+    "files": [
+        "../node_modules/typescript/lib/lib.es6.d.ts",
+        "../typings/tsd-lib.d.ts",
+        "index.ts"
+    ]
+}
