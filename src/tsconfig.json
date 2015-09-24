@@ -9,6 +9,7 @@
         "suppressImplicitAnyIndexErrors": true,
         "sourceMap": true,
         "noLib": true,
+        "stripInternal": true,
         "outDir": "../lib"
     },
     "filesGlob": [
@@ -19,6 +20,11 @@
     "files": [
         "../node_modules/typescript/lib/lib.es6.d.ts",
         "../typings/tsd-lib.d.ts",
+        "config.ts",
+        "engine.ts",
+        "inferior.ts",
+        "provider.ts",
+        "session.ts",
         "index.ts"
     ]
 }
