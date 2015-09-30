@@ -3,9 +3,10 @@
 
 import { Emitter, Disposable } from 'event-kit';
 import {
-  IInferior, IInferiorDidExitEvent, InferiorExitReason, IInferiorStartOptions
+  IInferior, IInferiorDidExitEvent, InferiorExitReason, IInferiorStartOptions, DebugEngineError
 } from 'debug-engine';
 import * as dbgmits from 'dbgmits';
+import { getErrorDetail } from './utils';
 
 const EVENT_INFERIOR_DID_EXIT = 'infexit';
 
@@ -32,19 +33,31 @@ export default class GdbMiInferior implements IInferior {
         return this.session.setInferiorArguments(options.cmdlineArgs);
       }
     })
-    .then(() => this.session.startInferior({ stopAtStart: options.stopAtStart }));
+    .then(() => this.session.startInferior({ stopAtStart: options.stopAtStart }))
+    .catch((err) => {
+      throw new DebugEngineError('Failed to start inferior.', getErrorDetail(err));
+    });
   }
 
   abort(): Promise<void> {
-    return this.session.abortInferior();
+    return this.session.abortInferior()
+    .catch((err) => {
+      throw new DebugEngineError('Failed to abort inferior.', getErrorDetail(err));
+    });
   }
 
   interrupt(): Promise<void> {
-    return this.session.interruptInferior(this.id);
+    return this.session.interruptInferior(this.id)
+    .catch((err) => {
+      throw new DebugEngineError('Failed to interrupt inferior.', getErrorDetail(err));
+    });
   }
 
   resume(): Promise<void> {
-    return this.session.resumeInferior({ threadGroup: this.id });
+    return this.session.resumeInferior({ threadGroup: this.id })
+    .catch((err) => {
+      throw new DebugEngineError('Failed to resume inferior.', getErrorDetail(err));
+    });
   }
 
   /**

@@ -1,10 +1,13 @@
 // Copyright (c) 2015 Vadim Macagon
 // MIT License, see LICENSE file for full terms.
 
-import { IDebugSession, IInferior, ICreateInferiorOptions } from 'debug-engine';
+import {
+  IDebugSession, IInferior, ICreateInferiorOptions, DebugEngineError, ConnectionError
+} from 'debug-engine';
 import * as dbgmits from 'dbgmits';
 import GdbMiInferior from './inferior';
 import { DebuggerType } from './config';
+import { getErrorDetail } from './utils';
 
 export default class GdbMiDebugSession implements IDebugSession {
   private session: dbgmits.DebugSession;
@@ -28,6 +31,9 @@ export default class GdbMiDebugSession implements IDebugSession {
       const debuggerType = (this.debuggerType === DebuggerType.LLDB) ?
           dbgmits.DebuggerType.LLDB : dbgmits.DebuggerType.GDB;
       this.session = dbgmits.startDebugSession(debuggerType, this.debuggerPath);
+    })
+    .catch((err) => {
+      throw new DebugEngineError('Failed to start debug session.', getErrorDetail(err));
     });
   }
 
@@ -42,14 +48,23 @@ export default class GdbMiDebugSession implements IDebugSession {
           return inferior;
         });
       }
+    })
+    .catch((err) => {
+      throw new DebugEngineError('Failed to create inferior.', getErrorDetail(err));
     });
   }
 
   connectToRemoteTarget(host: string, port: number): Promise<void> {
-    return this.session.connectToRemoteTarget(host, port);
+    return this.session.connectToRemoteTarget(host, port)
+    .catch((err) => {
+      throw new ConnectionError(`Failed to connect to ${host}:${port}`, getErrorDetail(err));
+    });
   }
 
   end(): Promise<void> {
-    return this.session.end();
+    return this.session.end()
+    .catch((err) => {
+      throw new DebugEngineError('Failed to end debug session.', getErrorDetail(err));
+    });
   }
 }
