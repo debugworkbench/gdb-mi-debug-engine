@@ -123,7 +123,7 @@ export default class GdbMiInferior implements IInferior {
         break;
     }
 
-    if (exitReason) {
+    if (exitReason !== undefined) {
       this.emitter.emit(EVENT_INFERIOR_DID_EXIT, <IInferiorDidExitEvent> {
         inferior: this,
         reason: exitReason,
