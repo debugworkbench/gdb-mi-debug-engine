@@ -3,11 +3,14 @@
 
 import { Emitter, Disposable } from 'event-kit';
 import {
-  IInferior, IInferiorDidExitEvent, InferiorExitReason, IInferiorStartOptions, DebugEngineError
+  IInferior, IInferiorDidCreateThreadEvent, IInferiorDidExitEvent, InferiorExitReason,
+  IInferiorStartOptions, DebugEngineError
 } from 'debug-engine';
 import * as dbgmits from 'dbgmits';
 import { getErrorDetail } from './utils';
+import GdbMiThread from './thread';
 
+const EVENT_INFERIOR_DID_CREATE_THREAD = 'did-create-thread';
 const EVENT_INFERIOR_DID_EXIT = 'infexit';
 
 export default class GdbMiInferior implements IInferior {
@@ -17,6 +20,7 @@ export default class GdbMiInferior implements IInferior {
   private _started: boolean = false;
   private _exited: boolean = false;
   private _pid: string;
+  private _threads: GdbMiThread[] = [];
 
   get id(): string {
     return this._id;
@@ -42,10 +46,12 @@ export default class GdbMiInferior implements IInferior {
     this.onThreadGroupDidStart = this.onThreadGroupDidStart.bind(this);
     this.onThreadGroupDidExit = this.onThreadGroupDidExit.bind(this);
     this.onTargetDidStop = this.onTargetDidStop.bind(this);
+    this._onDidCreateThread = this._onDidCreateThread.bind(this);
 
     this.session.on(dbgmits.EVENT_THREAD_GROUP_STARTED, this.onThreadGroupDidStart);
     this.session.on(dbgmits.EVENT_THREAD_GROUP_EXITED, this.onThreadGroupDidExit);
     this.session.on(dbgmits.EVENT_TARGET_STOPPED, this.onTargetDidStop);
+    this.session.on(dbgmits.EVENT_THREAD_CREATED, this._onDidCreateThread);
   }
 
   start(options?: IInferiorStartOptions): Promise<void> {
@@ -82,9 +88,10 @@ export default class GdbMiInferior implements IInferior {
     });
   }
 
-  /**
-   * Adds an event handler that will be invoked when an inferior exits.
-   */
+  onDidCreateThread(callback: (e: IInferiorDidCreateThreadEvent) => void): Disposable {
+    return this.emitter.on(EVENT_INFERIOR_DID_CREATE_THREAD, callback);
+  }
+
   onDidExit(callback: (e: IInferiorDidExitEvent) => void): Disposable {
     return this.emitter.on(EVENT_INFERIOR_DID_EXIT, callback);
   }
@@ -128,6 +135,17 @@ export default class GdbMiInferior implements IInferior {
         inferior: this,
         reason: exitReason,
         exitCode: this.exitCode
+      });
+    }
+  }
+
+  private _onDidCreateThread(e: dbgmits.IThreadCreatedEvent): void {
+    if (this._id === e.groupId) {
+      const newThread = new GdbMiThread(this.session, e.id, this);
+      this._threads.push(newThread);
+      this.emitter.emit(EVENT_INFERIOR_DID_CREATE_THREAD, <IInferiorDidCreateThreadEvent> {
+        inferior: this,
+        thread: newThread
       });
     }
   }
