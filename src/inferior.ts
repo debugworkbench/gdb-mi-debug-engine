@@ -13,10 +13,32 @@ const EVENT_INFERIOR_DID_EXIT = 'infexit';
 export default class GdbMiInferior implements IInferior {
   private emitter: Emitter;
   private exitCode: string;
+  private _id: string;
+  private _started: boolean = false;
+  private _exited: boolean = false;
+  private _pid: string;
+
+  get id(): string {
+    return this._id;
+  }
+
+  get started(): boolean {
+    return this._started;
+  }
+
+  get exited(): boolean {
+    return this._exited;
+  }
+
+  get pid(): string {
+    return this._pid;
+  }
 
   /** @internal */
-  constructor(private session: dbgmits.DebugSession, private id?: string) {
+  constructor(private session: dbgmits.DebugSession, id?: string) {
+    this._id = id;
     this.emitter = new Emitter();
+
     this.onThreadGroupDidStart = this.onThreadGroupDidStart.bind(this);
     this.onThreadGroupDidExit = this.onThreadGroupDidExit.bind(this);
     this.onTargetDidStop = this.onTargetDidStop.bind(this);
@@ -68,14 +90,20 @@ export default class GdbMiInferior implements IInferior {
   }
 
   private onThreadGroupDidStart(e: dbgmits.IThreadGroupStartedEvent): void {
-    if (!this.id) {
-      this.id = e.id;
+    if (this._id === undefined) {
+      this._id = e.id;
+    }
+
+    if (this._id === e.id) {
+      this._started = true;
+      this._pid = e.pid;
     }
   }
 
   private onThreadGroupDidExit(e: dbgmits.IThreadGroupExitedEvent): void {
-    if (e.id === this.id) {
+    if (this._id === e.id) {
       this.exitCode = e.exitCode;
+      this.exited = true;
     }
   }
 
