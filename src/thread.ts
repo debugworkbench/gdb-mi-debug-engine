@@ -17,6 +17,7 @@ export default class GdbMiThread implements IThread {
   private _id: number;
   private _inferior: GdbMiInferior;
   private _emitter: Emitter;
+  private _isDisposed = false;
 
   get id(): number {
     return this._id;
@@ -40,6 +41,20 @@ export default class GdbMiThread implements IThread {
     this._session.on(dbgmits.EVENT_TARGET_RUNNING, this._onTargetDidResume);
     this._session.on(dbgmits.EVENT_TARGET_STOPPED, this._onTargetDidStop);
     this._session.on(dbgmits.EVENT_THREAD_EXITED, this._onThreadDidExit);
+  }
+
+  dispose(): void {
+    if (!this._isDisposed) {
+      this._session.removeListener(dbgmits.EVENT_TARGET_RUNNING, this._onTargetDidResume);
+      this._session.removeListener(dbgmits.EVENT_TARGET_STOPPED, this._onTargetDidStop);
+      this._session.removeListener(dbgmits.EVENT_THREAD_EXITED, this._onThreadDidExit);
+
+      this._emitter.dispose();
+      this._inferior = null;
+      this._session = null;
+
+      this._isDisposed = true;
+    }
   }
 
   onDidResume(callback: (e: IThreadDidResumeEvent) => void): Disposable {

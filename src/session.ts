@@ -12,6 +12,7 @@ import { getErrorDetail } from './utils';
 export default class GdbMiDebugSession implements IDebugSession {
   private _session: dbgmits.DebugSession;
   private _inferiors: GdbMiInferior[];
+  private _isDisposed = false;
 
   get inferior(): IInferior {
     if (this._inferiors.length > 0) {
@@ -24,6 +25,15 @@ export default class GdbMiDebugSession implements IDebugSession {
   /** @internal */
   constructor(private debuggerType: DebuggerType, private debuggerPath?: string) {
     this._inferiors = [];
+  }
+
+  dispose(): void {
+    if (!this._isDisposed) {
+      this._inferiors.forEach((inferior) => { inferior.dispose(); });
+      this._inferiors = [];
+
+      this._isDisposed = true;
+    }
   }
 
   start(): Promise<void> {

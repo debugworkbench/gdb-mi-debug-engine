@@ -22,6 +22,7 @@ export default class GdbMiInferior implements IInferior {
   private _exited = false;
   private _pid: string;
   private _threads: GdbMiThread[] = [];
+  private _isDisposed = false;
 
   get id(): string {
     return this._id;
@@ -54,6 +55,22 @@ export default class GdbMiInferior implements IInferior {
     this._session.on(dbgmits.EVENT_THREAD_GROUP_EXITED, this._onThreadGroupDidExit);
     this._session.on(dbgmits.EVENT_TARGET_STOPPED, this._onTargetDidStop);
     this._session.on(dbgmits.EVENT_THREAD_CREATED, this._onDidCreateThread);
+  }
+
+  dispose(): void {
+    if (!this._isDisposed) {
+      this._session.removeListener(dbgmits.EVENT_THREAD_GROUP_STARTED, this._onThreadGroupDidStart);
+      this._session.removeListener(dbgmits.EVENT_THREAD_GROUP_EXITED, this._onThreadGroupDidExit);
+      this._session.removeListener(dbgmits.EVENT_TARGET_STOPPED, this._onTargetDidStop);
+      this._session.removeListener(dbgmits.EVENT_THREAD_CREATED, this._onDidCreateThread);
+
+      this._emitter.dispose();
+      this._threads.forEach((thread) => { thread.dispose(); });
+      this._threads = [];
+      this._session = null;
+
+      this._isDisposed = true;
+    }
   }
 
   start(options?: IInferiorStartOptions): Promise<void> {
