@@ -10,12 +10,12 @@ import { DebuggerType } from './config';
 import { getErrorDetail } from './utils';
 
 export default class GdbMiDebugSession implements IDebugSession {
-  private session: dbgmits.DebugSession;
-  private inferiors: GdbMiInferior[];
+  private _session: dbgmits.DebugSession;
+  private _inferiors: GdbMiInferior[];
 
   get inferior(): IInferior {
-    if (this.inferiors.length > 0) {
-      return this.inferiors[0];
+    if (this._inferiors.length > 0) {
+      return this._inferiors[0];
     } else {
       throw new Error('No inferiors exist.');
     }
@@ -23,14 +23,14 @@ export default class GdbMiDebugSession implements IDebugSession {
 
   /** @internal */
   constructor(private debuggerType: DebuggerType, private debuggerPath?: string) {
-    this.inferiors = [];
+    this._inferiors = [];
   }
 
   start(): Promise<void> {
     return Promise.resolve().then(() => {
       const debuggerType = (this.debuggerType === DebuggerType.LLDB) ?
           dbgmits.DebuggerType.LLDB : dbgmits.DebuggerType.GDB;
-      this.session = dbgmits.startDebugSession(debuggerType, this.debuggerPath);
+      this._session = dbgmits.startDebugSession(debuggerType, this.debuggerPath);
     })
     .catch((err) => {
       throw new DebugEngineError('Failed to start debug session.', getErrorDetail(err));
@@ -41,10 +41,10 @@ export default class GdbMiDebugSession implements IDebugSession {
     options = options || {};
     return Promise.resolve().then(() => {
       if (options.executableFile) {
-        return this.session.setExecutableFile(options.executableFile)
+        return this._session.setExecutableFile(options.executableFile)
         .then(() => {
-          const inferior = new GdbMiInferior(this.session);
-          this.inferiors.push(inferior);
+          const inferior = new GdbMiInferior(this._session);
+          this._inferiors.push(inferior);
           return inferior;
         });
       }
@@ -55,14 +55,14 @@ export default class GdbMiDebugSession implements IDebugSession {
   }
 
   connectToRemoteTarget(host: string, port: number): Promise<void> {
-    return this.session.connectToRemoteTarget(host, port)
+    return this._session.connectToRemoteTarget(host, port)
     .catch((err) => {
       throw new ConnectionError(`Failed to connect to ${host}:${port}`, getErrorDetail(err));
     });
   }
 
   end(): Promise<void> {
-    return this.session.end()
+    return this._session.end()
     .catch((err) => {
       throw new DebugEngineError('Failed to end debug session.', getErrorDetail(err));
     });
