@@ -66,7 +66,7 @@ export default class GdbMiInferior implements IInferior {
 
       this._emitter.dispose();
       this._threads.forEach((thread) => { thread.dispose(); });
-      this._threads = [];
+      this._threads = null;
       this._session = null;
 
       this._isDisposed = true;
@@ -105,6 +105,15 @@ export default class GdbMiInferior implements IInferior {
     .catch((err) => {
       throw new DebugEngineError('Failed to resume inferior.', getErrorDetail(err));
     });
+  }
+
+  getThreadById(threadId: number): GdbMiThread {
+    for (let i = 0; i < this._threads.length; ++i) {
+      if (this._threads[i].id === threadId) {
+        return this._threads[i];
+      }
+    }
+    return null;
   }
 
   onDidCreateThread(callback: (e: IInferiorDidCreateThreadEvent) => void): Disposable {
