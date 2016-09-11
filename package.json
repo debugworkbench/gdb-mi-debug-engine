@@ -30,7 +30,7 @@
     "typescript": "^1.6.2"
   },
   "dependencies": {
-    "dbgmits": "^0.1.0",
+    "dbgmits": "github:enlight/dbgmits",
     "event-kit": "^1.2.0"
   }
 }
